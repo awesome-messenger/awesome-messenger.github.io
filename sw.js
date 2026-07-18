@@ -1,5 +1,5 @@
 /* Awesome Messenger — service worker: кэш файлов + клики по уведомлениям */
-var CACHE = "am-v3-4";
+var CACHE = "am-v3-5";
 var CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable.png"];
 
 self.addEventListener("install", function (e) {
