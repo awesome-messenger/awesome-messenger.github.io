@@ -1,6 +1,6 @@
 {
   "name": "Awesome Messenger",
-  "short_name": "Awesome",
+  "short_name": "Awesome Messenger",
   "description": "Закрытый мессенджер по приглашениям",
   "lang": "ru",
   "start_url": "./",
