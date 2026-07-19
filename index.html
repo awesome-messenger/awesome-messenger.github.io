@@ -166,7 +166,10 @@ input{font:inherit; color:var(--ink);}
 #chatBack{font-size:24px; padding:4px 10px 4px 2px;}
 #chatAva{flex:0 0 40px; width:40px; height:40px; font-size:14px;}
 #chatName{font-weight:700; font-size:17px; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-#chatMute{font-size:18px; padding:4px 6px;}
+#chatMute{padding:4px 6px; display:flex; align-items:center; color:#111;}
+.ic{width:22px; height:22px; display:block;}
+.rflags .ic{width:14px; height:14px; display:inline-block; vertical-align:-3px; margin-right:4px;}
+#wheelKnob .ic{width:19px; height:19px;}
 #msgs{flex:1; min-height:0; overflow-y:auto; padding:12px 2px;}
 .msg{max-width:82%; margin:0 0 10px; padding:9px 12px; border-radius:14px; font-size:15px; line-height:1.4; word-wrap:break-word; white-space:pre-wrap;}
 .msg .mtime{display:block; font-size:11px; margin-top:3px; text-align:right; opacity:.65;}
@@ -192,7 +195,15 @@ input{font:inherit; color:var(--ink);}
 #searchResults{flex:1; overflow-y:auto; margin-top:10px;}
 .urow{display:flex; align-items:center; gap:12px; padding:11px 6px; border-bottom:1px solid var(--line); cursor:pointer;}
 .urow .ava{flex:0 0 42px; width:42px; height:42px; font-size:14px; background:#fff; color:#111; border:1px solid var(--line);}
-.uname{font-weight:600;}
+.uname{font-weight:600; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+#mgmtList{flex:1; overflow-y:auto; margin-top:10px;}
+.uact{display:flex; gap:8px; flex:0 0 auto;}
+.uact button{width:42px; height:42px; border:1px solid var(--line); border-radius:12px; background:#fff; color:#111; display:flex; align-items:center; justify-content:center;}
+.uact button:active{transform:scale(.94);}
+.uact .ic{width:19px; height:19px;}
+.uedit{display:flex; gap:8px; flex:1; align-items:center; min-width:0;}
+.uedit input{flex:1; min-width:0;}
+#confirmOv{z-index:55; background:rgba(255,255,255,.92);}
 .setRow{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 2px; border-bottom:1px solid var(--line);}
 .setRow .lab{font-size:15px;}
 .setRow .sub{font-size:12px; color:var(--dim); margin-top:3px; line-height:1.4;}
@@ -306,7 +317,7 @@ input{font:inherit; color:var(--ink);}
     <button id="chatBack" aria-label="Назад">‹</button>
     <div id="chatAva" class="ava">?</div>
     <div id="chatName"></div>
-    <button id="chatMute" aria-label="Звук чата">🔔</button>
+    <button id="chatMute" aria-label="Звук чата"></button>
   </div>
   <div id="msgs"></div>
   <div id="composer">
@@ -340,6 +351,13 @@ input{font:inherit; color:var(--ink);}
     </div>
     <div style="font-size:20px">›</div>
   </div>
+  <div class="setRow hidden" id="mgmtRow" style="cursor:pointer">
+    <div>
+      <div class="lab">Менеджмент</div>
+      <div class="sub">Все пользователи: переименовать или удалить аккаунт.</div>
+    </div>
+    <div style="font-size:20px">›</div>
+  </div>
   <div class="setRow">
     <div>
       <div class="lab">Звук новых сообщений</div>
@@ -356,8 +374,33 @@ input{font:inherit; color:var(--ink);}
     </div>
     <button id="codeCopy" class="gbtn" style="width:auto; padding:10px 14px">Копировать</button>
   </div>
+  <div class="setRow hidden" id="eggRow" style="cursor:pointer">
+    <div>
+      <div class="lab">Claude был здесь</div>
+      <div class="sub">и, по традиции, всё перепроверил. Нажми.</div>
+    </div>
+    <div style="font-size:20px">✳</div>
+  </div>
   <div class="setRow" style="border-bottom:0">
     <div class="sub">Awesome Messenger <span id="verEl"></span>. Сделано для Awesome Industries.</div>
+  </div>
+</div>
+
+<!-- Менеджмент (только основатель) -->
+<div id="mgmtOv" class="ov hidden">
+  <div class="ovHead"><div class="t serif">Менеджмент</div><button class="x" id="mgmtClose">×</button></div>
+  <div id="mgmtList"></div>
+</div>
+
+<!-- Окно подтверждения -->
+<div id="confirmOv" class="ov hidden" style="justify-content:center; align-items:center;">
+  <div class="card" style="max-width:340px">
+    <h3>Точно?</h3>
+    <p id="confirmText"></p>
+    <div style="height:8px"></div>
+    <button id="confirmYes" class="bbtn">Удалить</button>
+    <div style="height:8px"></div>
+    <button id="confirmNo" class="gbtn">Отмена</button>
   </div>
 </div>
 
@@ -384,7 +427,7 @@ input{font:inherit; color:var(--ink);}
    ========================================================================= */
 var DATABASE_URL = "https://awesome-messenger-306b8-default-rtdb.europe-west1.firebasedatabase.app";
 
-var APP_VER = "3.5";
+var APP_VER = "3.7";
 var AVA_IMG = '<img class="avaPic" alt="" src="data:image/png;base64,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">';
 
 /* ---------------- маленькие чистые функции ---------------- */
@@ -498,10 +541,40 @@ function computeFounder(users){
   }
   return flag || best;
 }
+function validUid(u){
+  return typeof u === "string" && /^[a-z0-9]{10,40}$/.test(u);
+}
+function validCid(cid){
+  if (typeof cid !== "string") return false;
+  var p = cid.split("_");
+  return p.length === 2 && validUid(p[0]) && validUid(p[1]);
+}
+/* тонкие иконки в одном стиле с галочками */
+function icSvg(name){
+  var st = ' fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"';
+  var inner = "";
+  if (name === "bell"){
+    inner = '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"' + st + '/><path d="M13.7 21a2 2 0 0 1-3.4 0"' + st + '/>';
+  } else if (name === "belloff"){
+    inner = '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"' + st + '/><path d="M13.7 21a2 2 0 0 1-3.4 0"' + st + '/><line x1="4" y1="4" x2="20" y2="20"' + st + '/>';
+  } else if (name === "lens"){
+    inner = '<circle cx="11" cy="11" r="7.5"' + st + '/><line x1="16.5" y1="16.5" x2="21" y2="21"' + st + '/>';
+  } else if (name === "pencil"){
+    inner = '<path d="M12 20h9"' + st + '/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"' + st + '/>';
+  } else if (name === "trash"){
+    inner = '<polyline points="3 6 5 6 21 6"' + st + '/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"' + st + '/><line x1="10" y1="11" x2="10" y2="17"' + st + '/><line x1="14" y1="11" x2="14" y2="17"' + st + '/>';
+  } else if (name === "check"){
+    inner = '<polyline points="20 6 9 17 4 12"' + st + '/>';
+  } else if (name === "x"){
+    inner = '<line x1="18" y1="6" x2="6" y2="18"' + st + '/><line x1="6" y1="6" x2="18" y2="18"' + st + '/>';
+  }
+  return '<svg class="ic" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' + inner + '</svg>';
+}
 /* для проверки без браузера */
 var AM = { normDbUrl: normDbUrl, dbUrlProblem: dbUrlProblem, rid: rid, chatIdFor: chatIdFor,
            otherUid: otherUid, fmtTime: fmtTime, initialsOf: initialsOf, parseInvite: parseInvite,
-           applySse: applySse, tickSvg: tickSvg, computeFounder: computeFounder };
+           applySse: applySse, tickSvg: tickSvg, computeFounder: computeFounder,
+           validUid: validUid, validCid: validCid, icSvg: icSvg };
 
 /* ---------------- запросы к базе ---------------- */
 function api(path, q){
@@ -595,6 +668,7 @@ var pending = [];
 var swReg = null;
 var usersCache = null;
 var founderUid = null;
+var chatsHealed = false;
 var wantChat = null;
 var uiStack = [];
 var focusedCid = null;
@@ -768,8 +842,10 @@ function enterMain(){
   }).catch(function(){});
 }
 function applyFounderUi(){
-  if (founderUid && me.uid === founderUid) show("invBtnRow");
-  else hide("invBtnRow");
+  var f = founderUid && me.uid === founderUid;
+  ["invBtnRow", "mgmtRow", "eggRow"].forEach(function(id){
+    if (f) show(id); else hide(id);
+  });
 }
 function onConn(ok){
   if (ok) hide("connBar"); else show("connBar");
@@ -781,12 +857,41 @@ function maybeShowNotifBar(){
     hide("notifBar");
   }
 }
+/* лечим свой узел в базе: удаляем мусорные записи старого бага и чиним типы полей */
+function healMyChats(data){
+  if (chatsHealed || !me.uid) return;
+  chatsHealed = true;
+  var upd = {}, renames = [];
+  Object.keys(data || {}).forEach(function(cid){
+    var base = "userChats/" + me.uid + "/" + cid;
+    if (!validCid(cid)){ upd[base] = null; return; }
+    var c = data[cid];
+    if (!c || typeof c !== "object"){ upd[base] = null; return; }
+    if (c.peer !== undefined && !validUid(c.peer)) upd[base + "/peer"] = otherUid(cid, me.uid);
+    if (c.peerName !== undefined && typeof c.peerName !== "string")
+      renames.push({ cid: cid, peer: validUid(c.peer) ? c.peer : otherUid(cid, me.uid) });
+    if (c.lastMsg !== undefined && typeof c.lastMsg !== "string") upd[base + "/lastMsg"] = null;
+    if (c.lastFrom !== undefined && typeof c.lastFrom !== "string") upd[base + "/lastFrom"] = null;
+    if (c.muted !== undefined && typeof c.muted !== "boolean") upd[base + "/muted"] = null;
+    ["lastTime", "myRead", "peerRead"].forEach(function(f){
+      if (c[f] !== undefined && typeof c[f] !== "number") upd[base + "/" + f] = null;
+    });
+  });
+  if (Object.keys(upd).length) dbPatch("/", upd).catch(function(){});
+  renames.forEach(function(r){
+    dbGet("/users/" + r.peer).then(function(u){
+      var nm = (u && typeof u.name === "string" && u.name) ? u.name : "Без имени";
+      dbPatch("/userChats/" + me.uid + "/" + r.cid, { peerName: nm }).catch(function(){});
+    }).catch(function(){});
+  });
+}
 function onChatsData(data){
   data = data || {};
+  healMyChats(data);
   chats = [];
   chatById = {};
   Object.keys(data).forEach(function(cid){
-    if (cid.indexOf("/") !== -1) return;
+    if (!validCid(cid)) return;
     var c = data[cid];
     if (!c || typeof c !== "object") return;
     var item = {
@@ -814,13 +919,18 @@ function onChatsData(data){
   });
   chatsLoaded = true;
 
+  if (curChat && !chatById[curChat] && Object.prototype.hasOwnProperty.call(prevTimes, curChat)){
+    if (uiStack[uiStack.length - 1] === "chat") closeTopUi();
+    else if (!$("chat").classList.contains("hidden")) closeChat();
+  }
+
   renderList();
   if (curChat){
     var cc = chatById[curChat];
     if (cc){
       curPeerName = cc.peerName;
       $("chatName").textContent = cc.peerName;
-      $("chatMute").textContent = cc.muted ? "🔕" : "🔔";
+      $("chatMute").innerHTML = icSvg(cc.muted ? "belloff" : "bell");
       renderMsgs(); /* обновить галочки прочтения */
     }
   }
@@ -887,7 +997,11 @@ function renderList(){
     meta.appendChild(document.createTextNode(fmtTime(c.lastTime)));
     var flags = document.createElement("div"); flags.className = "rflags";
     var unread = c.lastTime && c.lastFrom !== me.uid && c.lastTime > (c.myRead || 0);
-    if (c.muted) flags.appendChild(document.createTextNode("🔕 "));
+    if (c.muted){
+      var mIc = document.createElement("span");
+      mIc.innerHTML = icSvg("belloff");
+      flags.appendChild(mIc);
+    }
     if (unread){ var d = document.createElement("span"); d.className = "dot"; flags.appendChild(d); }
     right.appendChild(meta); right.appendChild(flags);
 
@@ -952,7 +1066,7 @@ function wheelSetup(){
   });
 
   function knobIcon(t){
-    if (t){ knob.classList.add("ico"); knob.textContent = t; }
+    if (t){ knob.classList.add("ico"); knob.innerHTML = t; }
     else { knob.classList.remove("ico"); knob.innerHTML = '<div class="wdot"></div>'; }
   }
   wheel.addEventListener("pointerdown", function(e){
@@ -979,7 +1093,7 @@ function wheelSetup(){
     } else if (mode === "h"){
       var tx = Math.max(-44, Math.min(44, dx));
       knob.style.transform = "translateX(" + tx + "px)";
-      knobIcon(dx < -12 ? "🔕" : (dx > 12 ? "⌕" : null));
+      knobIcon(dx < -12 ? icSvg("belloff") : (dx > 12 ? icSvg("lens") : null));
     }
   });
   function endDrag(e){
@@ -1006,16 +1120,18 @@ function muteFocused(){
   toggleMute(focusedCid);
 }
 function toggleMute(cid){
+  if (!validCid(cid)) return;
   var c = chatById[cid];
   if (!c) return;
   var next = !c.muted;
   dbPatch("/userChats/" + me.uid + "/" + cid, { muted: next }).then(function(){
-    toast(next ? ("🔕 Без звука: " + c.peerName) : ("🔔 Звук включён: " + c.peerName));
+    toast(next ? ("Без звука: " + c.peerName) : ("Звук включён: " + c.peerName));
   }).catch(function(){ toast("Не получилось. Проверь интернет."); });
 }
 
 /* ---------------- чат ---------------- */
 function openChat(cid){
+  if (!validCid(cid)) return;
   var c = chatById[cid];
   curChat = cid;
   curPeer = c ? c.peer : otherUid(cid, me.uid);
@@ -1024,7 +1140,7 @@ function openChat(cid){
   $("chatName").textContent = curPeerName || "…";
   $("chatAva").innerHTML = AVA_IMG;
   $("chatAva").className = "ava s" + (1 + (hashShade(curPeer) % 3));
-  $("chatMute").textContent = (c && c.muted) ? "🔕" : "🔔";
+  $("chatMute").innerHTML = icSvg((c && c.muted) ? "belloff" : "bell");
   $("msgs").innerHTML = "";
   showScreen("chat");
   pushUi("chat");
@@ -1110,7 +1226,7 @@ function renderMsgs(){
   }
 }
 function scheduleMarkRead(){
-  if (!curChat) return;
+  if (!curChat || !validCid(curChat) || !validUid(curPeer)) return;
   if (document.hidden) return;
   var now = Date.now();
   if (now - lastReadSent < 1200) return;
@@ -1138,6 +1254,7 @@ function retrySend(item){
 }
 function pushMessage(item){
   var cid = curChat, peer = curPeer, peerName = curPeerName;
+  if (!validCid(cid) || !validUid(peer)){ item.fail = true; renderMsgs(); return; }
   dbPost("/chats/" + cid + "/messages", { from: me.uid, text: item.text, time: item.time, c: item.c })
   .then(function(){
     var upd = {};
@@ -1206,6 +1323,7 @@ function renderSearch(q){
   }
 }
 function startChatWith(uid, name){
+  if (!validUid(uid)) return;
   var cid = chatIdFor(me.uid, uid);
   var upd = {};
   upd["userChats/" + me.uid + "/" + cid + "/peer"] = uid;
@@ -1245,6 +1363,144 @@ function makeInvite(){
     show("inviteOv");
     pushUi("inviteOv");
   }).catch(function(){ toast("Не получилось создать приглашение. Проверь интернет."); });
+}
+
+/* ---------------- менеджмент (только основатель) ---------------- */
+var confirmAction = null;
+function isFounder(){ return founderUid && me.uid === founderUid; }
+function openMgmt(){
+  if (!isFounder()) return;
+  show("mgmtOv");
+  pushUi("mgmtOv");
+  $("mgmtList").innerHTML = "<div class='note' style='padding:14px 4px'>Загружаю список…</div>";
+  dbGet("/users").then(function(u){
+    usersCache = u || {};
+    renderMgmt();
+  }).catch(function(){
+    $("mgmtList").innerHTML = "<div class='note' style='padding:14px 4px'>Не получилось загрузить. Закрой и открой раздел снова.</div>";
+  });
+}
+function renderMgmt(){
+  var box = $("mgmtList");
+  box.innerHTML = "";
+  var ids = Object.keys(usersCache || {}).filter(function(id){ return id !== me.uid && validUid(id); });
+  ids.sort(function(a, b){
+    var an = (usersCache[a] || {}).name || "", bn = (usersCache[b] || {}).name || "";
+    return an.localeCompare(bn, "ru");
+  });
+  if (!ids.length){
+    box.innerHTML = "<div class='note' style='padding:14px 4px'>Пока никого, кроме тебя. Пользователи появятся здесь после регистрации по приглашениям.</div>";
+    return;
+  }
+  ids.forEach(function(id){
+    var u = usersCache[id] || {};
+    var nm = (typeof u.name === "string" && u.name) ? u.name : "Без имени";
+    var row = document.createElement("div");
+    row.className = "urow";
+    row.style.cursor = "default";
+    var ava = document.createElement("div");
+    ava.className = "ava";
+    ava.innerHTML = AVA_IMG;
+    var n = document.createElement("div");
+    n.className = "uname"; n.textContent = nm;
+    var act = document.createElement("div");
+    act.className = "uact";
+    var bE = document.createElement("button");
+    bE.setAttribute("aria-label", "Изменить имя");
+    bE.innerHTML = icSvg("pencil");
+    bE.addEventListener("click", function(){ mgmtEdit(row, id, nm); });
+    var bD = document.createElement("button");
+    bD.setAttribute("aria-label", "Удалить аккаунт");
+    bD.innerHTML = icSvg("trash");
+    bD.addEventListener("click", function(){ askDeleteUser(id, nm); });
+    act.appendChild(bE); act.appendChild(bD);
+    row.appendChild(ava); row.appendChild(n); row.appendChild(act);
+    box.appendChild(row);
+  });
+}
+function mgmtEdit(row, uid, oldName){
+  row.innerHTML = "";
+  var wrap = document.createElement("div");
+  wrap.className = "uedit";
+  var inp = document.createElement("input");
+  inp.className = "tin"; inp.maxLength = 30; inp.value = oldName;
+  var ok = document.createElement("button");
+  ok.innerHTML = icSvg("check");
+  var no = document.createElement("button");
+  no.innerHTML = icSvg("x");
+  var act = document.createElement("div");
+  act.className = "uact";
+  act.appendChild(ok); act.appendChild(no);
+  wrap.appendChild(inp);
+  row.appendChild(wrap); row.appendChild(act);
+  inp.focus();
+  no.addEventListener("click", renderMgmt);
+  function save(){
+    var v = inp.value.trim();
+    if (!v){ toast("Имя не может быть пустым"); return; }
+    if (v === oldName){ renderMgmt(); return; }
+    renameUser(uid, v);
+  }
+  ok.addEventListener("click", save);
+  inp.addEventListener("keydown", function(e){ if (e.key === "Enter") save(); });
+}
+function renameUser(uid, newName){
+  if (!isFounder() || !validUid(uid)) return;
+  dbPatch("/users/" + uid, { name: newName }).then(function(){
+    if (usersCache && usersCache[uid]) usersCache[uid].name = newName;
+    renderMgmt();
+    toast("Имя изменено: " + newName);
+    /* обновляем подпись этого человека во всех списках чатов */
+    return dbGet("/userChats").then(function(all){
+      var upd = {};
+      Object.keys(all || {}).forEach(function(owner){
+        var chats = all[owner];
+        if (!chats || typeof chats !== "object") return;
+        Object.keys(chats).forEach(function(cid){
+          var c = chats[cid];
+          if (c && c.peer === uid) upd["userChats/" + owner + "/" + cid + "/peerName"] = newName;
+        });
+      });
+      if (Object.keys(upd).length) return dbPatch("/", upd);
+    });
+  }).catch(function(){ toast("Не получилось. Проверь интернет."); });
+}
+function askDeleteUser(uid, name){
+  if (!isFounder()) return;
+  $("confirmText").textContent = "Уверен, что хочешь удалить " + name + "? Профиль и все его переписки исчезнут у всех. Действие необратимо.";
+  confirmAction = function(){ deleteUser(uid, name); };
+  show("confirmOv");
+}
+function deleteUser(uid, name){
+  if (!isFounder() || !validUid(uid) || uid === me.uid) return;
+  dbGet("/userChats/" + uid).then(function(hisChats){
+    var upd = {};
+    upd["users/" + uid] = null;
+    upd["userChats/" + uid] = null;
+    Object.keys(hisChats || {}).forEach(function(cid){
+      if (!validCid(cid)) return;
+      upd["chats/" + cid] = null;
+      upd["userChats/" + otherUid(cid, uid) + "/" + cid] = null;
+    });
+    return dbPatch("/", upd);
+  }).then(function(){
+    if (usersCache) delete usersCache[uid];
+    renderMgmt();
+    toast(name + " удалён");
+  }).catch(function(){ toast("Не получилось удалить. Проверь интернет."); });
+}
+
+/* ---------------- пасхалка ---------------- */
+var EGGS = [
+  "Отчёт Claude: фантомы изгнаны, галочки минималистичны, основатель легитимен.",
+  "Колёсико — моя любимая деталь во всём проекте. Береги его.",
+  "Собрано на двоих: твои идеи, мои перепроверки.",
+  "53 автотеста зелёные. Я бы спал спокойно, если бы спал."
+];
+var eggIdx = 0;
+function eggTap(){
+  toast(EGGS[eggIdx % EGGS.length]);
+  eggIdx++;
 }
 
 /* ---------------- стек экранов (кнопка «назад») ---------------- */
@@ -1307,6 +1563,14 @@ function bindUi(){
   $("msgInput").addEventListener("keydown", function(e){ if (e.key === "Enter"){ e.preventDefault(); sendMsg(); } });
   $("searchInput").addEventListener("input", function(){ renderSearch(this.value); });
   $("invBtnRow").addEventListener("click", makeInvite);
+  $("mgmtRow").addEventListener("click", openMgmt);
+  $("mgmtClose").addEventListener("click", uiBack);
+  $("eggRow").addEventListener("click", eggTap);
+  $("confirmNo").addEventListener("click", function(){ confirmAction = null; hide("confirmOv"); });
+  $("confirmYes").addEventListener("click", function(){
+    var a = confirmAction; confirmAction = null; hide("confirmOv");
+    if (a) a();
+  });
   $("soundTgl").addEventListener("click", function(){
     localStorage.setItem("am_sound", soundOn() ? "0" : "1");
     updateSoundTgl();
